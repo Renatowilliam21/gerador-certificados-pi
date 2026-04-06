@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emissor de Certificados - IFCE Boa Viagem</title>
+    <style>
+        :root {
+            --ifce-green: #2f8132;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Estilos do Formulário */
+        .container {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: var(--ifce-green);
+            border-bottom: 2px solid var(--ifce-green);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        #team-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            margin: 20px 0;
+        }
+
+        .team-member-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-add { background-color: #e0e0e0; color: #333; }
+        .btn-remove { background-color: #ffeded; color: #cc0000; padding: 5px 15px; }
+        .btn-generate { 
+            background-color: var(--ifce-green); 
+            color: white; 
+            width: 100%; 
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* --- Estilos do Certificado (Impressão) --- */
+        #certificates-container { display: none; }
+
+        .certificate-page {
+            width: 297mm;
+            height: 210mm;
+            padding: 15mm 20mm;
+            border: 15px solid var(--ifce-green);
+            background: white;
+            box-sizing: border-box;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .certificate-page:last-child { page-break-after: auto; }
+
+        .cert-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            gap: 25px;
+        }
+
+        .cert-logo {
+            height: 90px;
+            width: auto;
+        }
+
+        .cert-header-text { text-align: center; }
+        .cert-header-text h3 { margin: 0; font-size: 1.4rem; }
+        .cert-header-text h4 { margin: 5px 0; font-size: 1.1rem; font-weight: normal; }
+        .cert-header-text p { margin: 0; font-size: 1rem; }
+
+        .cert-content {
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cert-title {
+            font-size: 4rem;
+            color: var(--ifce-green);
+            margin: 0 0 30px 0;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .cert-text {
+            font-size: 1.5rem;
+            text-align: justify;
+            line-height: 1.8;
+            margin: 0 auto;
+            max-width: 95%;
+        }
+
+        .cert-footer {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .signature-line {
+            width: 50%;
+            margin: 0 auto 10px auto;
+            border-top: 2px solid #333;
+        }
+
+        /* Ajustes para Impressão */
+        @media print {
+            body * { visibility: hidden; }
+            #certificates-container, #certificates-container * { visibility: visible; }
+            #certificates-container {
+                display: block !important;
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+            }
+            @page { size: A4 landscape; margin: 0; }
+            .certificate-page { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Gerador de Certificados Individuais</h2>
+    
+    <div class="form-group">
+        <label>Nome do Sistema Desenvolvido:</label>
+        <input type="text" id="sysName" placeholder="Ex: Sistema de PDV">
+    </div>
+
+    <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 2;">
+            <label>Nome do Orientador(a):</label>
+            <input type="text" id="advisorName" placeholder="Nome completo do professor">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>Semestre Corrente:</label>
+            <input type="text" id="semester" placeholder="Ex: 2026.1">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Cliente Externo Atendido:</label>
+        <input type="text" id="clientName" placeholder="Ex: Clínica Odontológica X">
+    </div>
+
+    <div id="team-section">
+        <label>Alunos da Equipe:</label>
+        <div class="team-member-row">
+            <input type="text" class="member-name" placeholder="Nome do Aluno" required>
+            <input type="text" class="member-id" placeholder="Matrícula" style="width: 180px;">
+            <button type="button" class="btn-remove" onclick="removeMember(this)">×</button>
+        </div>
+    </div>
+    <button type="button" class="btn-add" onclick="addMember()">+ Adicionar Aluno</button>
+
+    <button class="btn-generate" onclick="generateCertificates()">Gerar Certificados Individuais</button>
+</div>
+
+<div id="certificates-container"></div>
+
+<script>
+    function addMember() {
+        const div = document.createElement('div');
+        div.className = 'team-member-row';
+        div.innerHTML = `
+            <input type="text" class="member-name" placeholder="Nome do Aluno" required>
+            <input type="text" class="member-id" placeholder="Matrícula" style="width: 180px;">
+            <button type="button" class="btn-remove" onclick="removeMember(this)">×</button>
+        `;
+        document.getElementById('team-section').appendChild(div);
+    }
+
+    function removeMember(btn) {
+        btn.parentElement.remove();
+    }
+
+    function generateCertificates() {
+        const sysName = document.getElementById('sysName').value;
+        const advisorName = document.getElementById('advisorName').value;
+        const clientName = document.getElementById('clientName').value;
+        const semester = document.getElementById('semester').value;
+        const memberRows = document.querySelectorAll('.team-member-row');
+        const container = document.getElementById('certificates-container');
+        
+        container.innerHTML = '';
+
+        if(!sysName || !semester || !memberRows[0].querySelector('.member-name').value) {
+            alert('Por favor, preencha os campos obrigatórios.');
+            return;
+        }
+
+        const dateObj = new Date();
+        const formattedDate = `Boa Viagem, ${dateObj.getDate()} de ${dateObj.toLocaleString('pt-BR', {month: 'long'})} de ${dateObj.getFullYear()}.`;
+
+        memberRows.forEach(row => {
+            const name = row.querySelector('.member-name').value;
+            const id = row.querySelector('.member-id').value;
+
+            if (name) {
+                const certHtml = `
+                    <div class="certificate-page">
+                        <div class="cert-header">
+                            <img src="imagelogo.png" alt="Logo IFCE" class="cert-logo">
+                            <div class="cert-header-text">
+                                <h3>INSTITUTO FEDERAL DO CEARÁ - CAMPUS BOA VIAGEM</h3>
+                                <h4>Curso de Tecnologia em Análise e Desenvolvimento de Sistemas</h4>
+                                <p>Boa Viagem - Ceará</p>
+                            </div>
+                        </div>
+
+                        <div class="cert-content">
+                            <h1 class="cert-title">CERTIFICADO</h1>
+                            <div class="cert-text">
+                                Certificamos que o(a) aluno(a) <strong>${name}</strong>, matrícula <strong>${id || 'N/A'}</strong>, 
+                                concluiu com êxito a disciplina de <strong>Projeto Integrador</strong> no semestre 
+                                <strong>${semester}</strong>. O(A) estudante participou ativamente do desenvolvimento do sistema 
+                                <strong>"${sysName}"</strong>, realizado para o cliente externo <strong>${clientName}</strong>, 
+                                sob orientação do(a) Prof(a). <strong>${advisorName}</strong>, totalizando uma carga horária de <strong>80 horas</strong>.
+                            </div>
+                        </div>
+
+                        <div class="cert-footer">
+                            <div class="signature-line"></div>
+                            <p>Coordenação do Curso / Orientação</p>
+                            <p style="font-weight: normal; margin-top: 10px;">${formattedDate}</p>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += certHtml;
+            }
+        });
+
+        window.print();
+    }
+</script>
+
+</body>
+</html>
